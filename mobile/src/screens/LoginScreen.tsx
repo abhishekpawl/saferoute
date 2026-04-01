@@ -24,7 +24,6 @@ export function LoginScreen() {
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
   const [role, setRole] = useState<UserRole>("TRAVELER");
-  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState<string | null>(null);
 
@@ -33,7 +32,6 @@ export function LoginScreen() {
       setLoading(true);
       const response = await requestOtp({ phone, name, role });
       setDevOtp(response.dev_otp ?? null);
-      setOtpSent(true);
     } catch (error) {
       Alert.alert("Could not send OTP", "Check the API server and try again.");
     } finally {
@@ -42,6 +40,11 @@ export function LoginScreen() {
   }
 
   async function handleVerifyOtp() {
+    if (!phone || !otp) {
+      Alert.alert("Missing details", "Enter your phone number and OTP to continue.");
+      return;
+    }
+
     try {
       setLoading(true);
       await verifyOtp({ phone, otp, name, role });
@@ -66,7 +69,7 @@ export function LoginScreen() {
               <Text style={styles.eyebrow}>Travel safety network</Text>
               <Text style={styles.title}>Find trusted local help when it matters most.</Text>
               <Text style={styles.subtitle}>
-                Sign in as a traveler or guardian. The development OTP is surfaced below until SMS delivery is wired up.
+                Sign in as a traveler or guardian. For testing, you can enter the configured fallback OTP directly.
               </Text>
 
               <View style={styles.roleRow}>
@@ -96,31 +99,26 @@ export function LoginScreen() {
                 placeholder="Phone number"
                 keyboardType="phone-pad"
                 placeholderTextColor={palette.muted}
-                returnKeyType={otpSent ? "next" : "done"}
+                returnKeyType="next"
               />
-
-              {otpSent ? (
-                <>
-                  <TextInput
-                    style={styles.input}
-                    value={otp}
-                    onChangeText={setOtp}
-                    placeholder="Enter OTP"
-                    keyboardType="number-pad"
-                    placeholderTextColor={palette.muted}
-                    returnKeyType="done"
-                    onSubmitEditing={handleVerifyOtp}
-                  />
-                  {devOtp ? <Text style={styles.devOtp}>Dev OTP: {devOtp}</Text> : null}
-                  <Pressable style={styles.primaryButton} onPress={handleVerifyOtp} disabled={loading}>
-                    <Text style={styles.primaryButtonText}>{loading ? "Verifying..." : "Verify & Continue"}</Text>
-                  </Pressable>
-                </>
-              ) : (
-                <Pressable style={styles.primaryButton} onPress={handleRequestOtp} disabled={loading}>
-                  <Text style={styles.primaryButtonText}>{loading ? "Sending..." : "Request OTP"}</Text>
-                </Pressable>
-              )}
+              <TextInput
+                style={styles.input}
+                value={otp}
+                onChangeText={setOtp}
+                placeholder="Enter OTP"
+                keyboardType="number-pad"
+                placeholderTextColor={palette.muted}
+                returnKeyType="done"
+                onSubmitEditing={handleVerifyOtp}
+              />
+              <Text style={styles.helperText}>Test OTP: 123456</Text>
+              {devOtp ? <Text style={styles.devOtp}>Requested OTP: {devOtp}</Text> : null}
+              <Pressable style={styles.primaryButton} onPress={handleVerifyOtp} disabled={loading}>
+                <Text style={styles.primaryButtonText}>{loading ? "Verifying..." : "Verify & Continue"}</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryButton} onPress={handleRequestOtp} disabled={loading}>
+                <Text style={styles.secondaryButtonText}>{loading ? "Sending..." : "Request OTP Instead"}</Text>
+              </Pressable>
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -198,6 +196,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
   },
+  helperText: {
+    color: palette.muted,
+    fontSize: 14,
+  },
   devOtp: {
     color: palette.accentDeep,
     fontWeight: "700",
@@ -213,5 +215,18 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
     fontWeight: "800",
+  },
+  secondaryButton: {
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.surface,
+  },
+  secondaryButtonText: {
+    color: palette.ink,
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

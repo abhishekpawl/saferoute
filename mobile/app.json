@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "SafeRoute",
+    "slug": "saferoute",
+    "scheme": "saferoute",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.saferoute.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SafeRoute uses your location to discover guardians and send SOS alerts."
+      }
+    },
+    "android": {
+      "package": "com.saferoute.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

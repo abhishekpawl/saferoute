@@ -1,0 +1,2 @@
+"""SafeRoute backend application package."""
+

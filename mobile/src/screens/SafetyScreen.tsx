@@ -9,7 +9,7 @@ import { palette } from "../theme/theme";
 import { SOSResponse } from "../types/api";
 
 export function SafetyScreen() {
-  const { token, user } = useAuth();
+  const { token, user, isDemoSession } = useAuth();
   const { connected, events, send } = useRealtime(token);
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [sosMessage, setSosMessage] = useState("");
@@ -35,12 +35,16 @@ export function SafetyScreen() {
         speed_mps: position.coords.speed,
       };
 
+      if (isDemoSession) {
+        return;
+      }
+
       send({ type: "location:update", payload });
       await api.post("/locations/me", payload);
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [trackingEnabled]);
+  }, [isDemoSession, trackingEnabled]);
 
   async function triggerSos() {
     try {
@@ -51,6 +55,22 @@ export function SafetyScreen() {
       }
 
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      if (isDemoSession) {
+        const demoResponse: SOSResponse = {
+          id: `demo-sos-${Date.now()}`,
+          traveler_id: user?.id ?? "demo-user",
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          message: sosMessage || undefined,
+          status: "OPEN",
+          created_at: new Date().toISOString(),
+          notified_guardians: 2,
+        };
+        setLastSos(demoResponse);
+        Alert.alert("Demo SOS sent", "This is a demo alert. No real backend notification was sent.");
+        return;
+      }
+
       const { data } = await api.post<SOSResponse>("/sos/trigger", {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
@@ -82,7 +102,7 @@ export function SafetyScreen() {
           <Switch value={trackingEnabled} onValueChange={setTrackingEnabled} />
         </View>
         <Text style={styles.metaText}>
-          Connection: {connected ? "Realtime channel connected" : "Waiting for realtime channel"}
+          Connection: {isDemoSession ? "Demo mode" : connected ? "Realtime channel connected" : "Waiting for realtime channel"}
         </Text>
       </View>
 
@@ -113,7 +133,9 @@ export function SafetyScreen() {
         <Text style={styles.cardTitle}>Activity feed</Text>
         <Text style={styles.cardSubtitle}>Recent WebSocket messages for {user?.name ?? "this user"}.</Text>
         <View style={styles.feed}>
-          {events.length === 0 ? (
+          {isDemoSession ? (
+            <Text style={styles.metaText}>Demo mode is active. Realtime events are bypassed for quick UI testing.</Text>
+          ) : events.length === 0 ? (
             <Text style={styles.metaText}>No events received yet.</Text>
           ) : (
             events.map((event, index) => (

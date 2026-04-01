@@ -4,6 +4,7 @@ import * as Location from "expo-location";
 import MapView, { Marker, UrlTile } from "react-native-maps";
 
 import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { Guardian } from "../types/api";
 import { palette } from "../theme/theme";
 
@@ -15,6 +16,7 @@ type Region = {
 };
 
 export function GuardiansMapScreen() {
+  const { isDemoSession } = useAuth();
   const [region, setRegion] = useState<Region | null>(null);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,38 @@ export function GuardiansMapScreen() {
       };
 
       setRegion(nextRegion);
+      if (isDemoSession) {
+        setGuardians([
+          {
+            id: "demo-guardian-1",
+            user_id: "demo-guardian-user-1",
+            name: "Anaya Sharma",
+            phone_masked: "91******24",
+            rating_average: 4.8,
+            rating_count: 31,
+            is_verified: true,
+            is_active: true,
+            lat: location.coords.latitude + 0.006,
+            lng: location.coords.longitude + 0.004,
+            distance_km: 0.8,
+          },
+          {
+            id: "demo-guardian-2",
+            user_id: "demo-guardian-user-2",
+            name: "Rohit Mehta",
+            phone_masked: "91******76",
+            rating_average: 4.6,
+            rating_count: 18,
+            is_verified: true,
+            is_active: true,
+            lat: location.coords.latitude - 0.004,
+            lng: location.coords.longitude + 0.003,
+            distance_km: 0.63,
+          },
+        ]);
+        return;
+      }
+
       await api.post("/locations/me", {
         lat: location.coords.latitude,
         lng: location.coords.longitude,
@@ -60,7 +94,7 @@ export function GuardiansMapScreen() {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [isDemoSession]);
 
   if (loading || !region) {
     return (
@@ -95,7 +129,9 @@ export function GuardiansMapScreen() {
         <View style={styles.panelHeader}>
           <View>
             <Text style={styles.panelTitle}>Nearby guardians</Text>
-            <Text style={styles.panelSubtitle}>{guardians.length} verified helpers in range</Text>
+            <Text style={styles.panelSubtitle}>
+              {guardians.length} verified helpers in range{isDemoSession ? " • demo mode" : ""}
+            </Text>
           </View>
           <Pressable style={styles.refreshButton} onPress={refresh}>
             <Text style={styles.refreshButtonText}>Refresh</Text>

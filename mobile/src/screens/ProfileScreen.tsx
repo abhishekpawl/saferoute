@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { palette } from "../theme/theme";
 
 export function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemoSession } = useAuth();
 
   return (
     <View style={styles.screen}>
@@ -13,6 +13,7 @@ export function ProfileScreen() {
         <Text style={styles.meta}>Role: {user?.role}</Text>
         <Text style={styles.meta}>Phone: {user?.phone}</Text>
         <Text style={styles.meta}>Verified: {user?.is_verified ? "Yes" : "Pending guardian verification"}</Text>
+        {isDemoSession ? <Text style={styles.meta}>Session: Demo mode bypass is active</Text> : null}
       </View>
 
       <View style={styles.card}>
@@ -72,4 +73,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

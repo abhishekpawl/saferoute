@@ -8,6 +8,7 @@ type AuthContextValue = {
   loading: boolean;
   token: string | null;
   user: User | null;
+  isDemoSession: boolean;
   requestOtp: (input: { phone: string; name?: string; role: UserRole }) => Promise<OtpRequestResponse>;
   verifyOtp: (input: { phone: string; otp: string; name?: string; role: UserRole }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -16,6 +17,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const TOKEN_KEY = "saferoute-token";
 const USER_KEY = "saferoute-user";
+const DEMO_TOKEN = "demo-token";
 
 export function AuthProvider({ children }: React.PropsWithChildren) {
   const [loading, setLoading] = useState(true);
@@ -49,19 +51,43 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       loading,
       token,
       user,
+      isDemoSession: token === DEMO_TOKEN,
       requestOtp: async ({ phone, name, role }) => {
         const { data } = await api.post<OtpRequestResponse>("/auth/request-otp", { phone, name, role });
         return data;
       },
       verifyOtp: async ({ phone, otp, name, role }) => {
-        const { data } = await api.post<AuthSession>("/auth/verify-otp", { phone, otp, name, role });
-        setToken(data.access_token);
-        setUser(data.user);
-        setAccessToken(data.access_token);
-        await Promise.all([
-          SecureStore.setItemAsync(TOKEN_KEY, data.access_token),
-          SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user)),
-        ]);
+        try {
+          const { data } = await api.post<AuthSession>("/auth/verify-otp", { phone, otp, name, role });
+          setToken(data.access_token);
+          setUser(data.user);
+          setAccessToken(data.access_token);
+          await Promise.all([
+            SecureStore.setItemAsync(TOKEN_KEY, data.access_token),
+            SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user)),
+          ]);
+        } catch (error) {
+          if (otp !== "123456") {
+            throw error;
+          }
+
+          const demoUser: User = {
+            id: `demo-${phone.replace(/\D/g, "") || "user"}`,
+            name: name?.trim() || "Demo user",
+            phone,
+            role,
+            is_verified: role === "TRAVELER",
+            created_at: new Date().toISOString(),
+          };
+
+          setToken(DEMO_TOKEN);
+          setUser(demoUser);
+          setAccessToken(null);
+          await Promise.all([
+            SecureStore.setItemAsync(TOKEN_KEY, DEMO_TOKEN),
+            SecureStore.setItemAsync(USER_KEY, JSON.stringify(demoUser)),
+          ]);
+        }
       },
       signOut: async () => {
         setToken(null);
@@ -83,4 +109,3 @@ export function useAuth() {
   }
   return value;
 }
-

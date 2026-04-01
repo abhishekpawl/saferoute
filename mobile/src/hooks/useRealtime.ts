@@ -9,7 +9,8 @@ export function useRealtime(token: string | null) {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (!token) {
+    if (!token || token === "demo-token") {
+      setConnected(false);
       return;
     }
 
@@ -43,4 +44,3 @@ export function useRealtime(token: string | null) {
 
   return { connected, events, send };
 }
-

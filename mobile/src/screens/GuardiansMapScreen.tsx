@@ -20,9 +20,11 @@ export function GuardiansMapScreen() {
   const [region, setRegion] = useState<Region | null>(null);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(true);
+  const [backendWarning, setBackendWarning] = useState<string | null>(null);
 
   async function refresh() {
     try {
+      setBackendWarning(null);
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
         Alert.alert("Location required", "Guardian discovery needs your current location.");
@@ -70,23 +72,28 @@ export function GuardiansMapScreen() {
         return;
       }
 
-      await api.post("/locations/me", {
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-        accuracy_meters: location.coords.accuracy,
-        heading: location.coords.heading,
-        speed_mps: location.coords.speed,
-      });
-
-      const response = await api.get<Guardian[]>("/guardians/nearby", {
-        params: {
+      try {
+        await api.post("/locations/me", {
           lat: location.coords.latitude,
           lng: location.coords.longitude,
-        },
-      });
-      setGuardians(response.data);
+          accuracy_meters: location.coords.accuracy,
+          heading: location.coords.heading,
+          speed_mps: location.coords.speed,
+        });
+
+        const response = await api.get<Guardian[]>("/guardians/nearby", {
+          params: {
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+          },
+        });
+        setGuardians(response.data);
+      } catch (error) {
+        setGuardians([]);
+        setBackendWarning("Map loaded, but live guardian updates are temporarily unavailable.");
+      }
     } catch (error) {
-      Alert.alert("Could not load map data", "Check permissions and confirm the backend is running.");
+      Alert.alert("Could not load location", "Check location permission and GPS availability on this device.");
     } finally {
       setLoading(false);
     }
@@ -137,6 +144,8 @@ export function GuardiansMapScreen() {
             <Text style={styles.refreshButtonText}>Refresh</Text>
           </Pressable>
         </View>
+
+        {backendWarning ? <Text style={styles.warningText}>{backendWarning}</Text> : null}
 
         {guardians.length === 0 ? (
           <Text style={styles.emptyState}>No active guardians are sharing live location nearby right now.</Text>
@@ -218,6 +227,10 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     color: palette.muted,
+    lineHeight: 22,
+  },
+  warningText: {
+    color: palette.accentDeep,
     lineHeight: 22,
   },
   guardianCard: {

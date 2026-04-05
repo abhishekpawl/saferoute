@@ -4,8 +4,10 @@ import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { LoginScreen } from "../screens/LoginScreen";
 import { GuardiansMapScreen } from "../screens/GuardiansMapScreen";
+import { PlannerScreen } from "../screens/PlannerScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { SafetyScreen } from "../screens/SafetyScreen";
+import { TicketSearchScreen } from "../screens/TicketSearchScreen";
 import { palette } from "../theme/theme";
 
 const Tab = createBottomTabNavigator();
@@ -42,10 +44,11 @@ export function AppNavigator() {
         tabBarInactiveTintColor: palette.muted,
       }}
     >
+      <Tab.Screen name="Tickets" component={TicketSearchScreen} />
+      <Tab.Screen name="Planner" component={PlannerScreen} />
       <Tab.Screen name="Guardians" component={GuardiansMapScreen} />
       <Tab.Screen name="Safety" component={SafetyScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
-

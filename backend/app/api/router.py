@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, guardians, health, locations, realtime, reviews, sos, users
+from app.api.routes import auth, guardians, health, locations, planner, realtime, reviews, sos, tickets, users
 
 
 api_router = APIRouter()
@@ -11,5 +11,6 @@ api_router.include_router(guardians.router, prefix="/guardians", tags=["guardian
 api_router.include_router(locations.router, prefix="/locations", tags=["locations"])
 api_router.include_router(sos.router, prefix="/sos", tags=["sos"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
+api_router.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
+api_router.include_router(planner.router, prefix="/planner", tags=["planner"])
 api_router.include_router(realtime.router, prefix="/ws", tags=["realtime"])
-

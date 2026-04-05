@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { api, setAccessToken } from "../api/client";
+import { api, setAccessToken, setUnauthorizedHandler } from "../api/client";
 import { AuthSession, OtpRequestResponse, User, UserRole } from "../types/api";
 
 type AuthContextValue = {
@@ -19,10 +19,47 @@ const TOKEN_KEY = "saferoute-token";
 const USER_KEY = "saferoute-user";
 const DEMO_TOKEN = "demo-token";
 
+function decodeJwtPayload(token: string) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = globalThis.atob(padded);
+    return JSON.parse(decoded) as { exp?: number };
+  } catch {
+    return null;
+  }
+}
+
+function isExpiredToken(token: string) {
+  if (!token || token === DEMO_TOKEN) {
+    return false;
+  }
+
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) {
+    return false;
+  }
+
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  return payload.exp <= nowInSeconds;
+}
+
 export function AuthProvider({ children }: React.PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+
+  async function clearSession() {
+    setToken(null);
+    setUser(null);
+    setAccessToken(null);
+    await Promise.all([SecureStore.deleteItemAsync(TOKEN_KEY), SecureStore.deleteItemAsync(USER_KEY)]);
+  }
 
   useEffect(() => {
     async function hydrate() {
@@ -32,11 +69,15 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       ]);
 
       if (storedToken) {
-        setToken(storedToken);
-        setAccessToken(storedToken);
+        if (isExpiredToken(storedToken)) {
+          await clearSession();
+        } else {
+          setToken(storedToken);
+          setAccessToken(storedToken === DEMO_TOKEN ? null : storedToken);
+        }
       }
 
-      if (storedUser) {
+      if (storedUser && !(storedToken && isExpiredToken(storedToken))) {
         setUser(JSON.parse(storedUser) as User);
       }
 
@@ -44,6 +85,16 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     }
 
     hydrate();
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(async () => {
+      await clearSession();
+    });
+
+    return () => {
+      setUnauthorizedHandler(null);
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -90,10 +141,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         }
       },
       signOut: async () => {
-        setToken(null);
-        setUser(null);
-        setAccessToken(null);
-        await Promise.all([SecureStore.deleteItemAsync(TOKEN_KEY), SecureStore.deleteItemAsync(USER_KEY)]);
+        await clearSession();
       },
     }),
     [loading, token, user]

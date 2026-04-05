@@ -59,3 +59,64 @@ export type RealtimeEvent = {
   payload?: Record<string, unknown>;
 };
 
+export type TicketMode = "AIR" | "TRAIN" | "BUS";
+export type CabinClass = "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS" | "FIRST";
+
+export type TicketSearchPayload = {
+  mode: TicketMode;
+  origin: string;
+  destination: string;
+  departure_date: string;
+  return_date?: string | null;
+  adults: number;
+  children: number;
+  infants: number;
+  cabin_class?: CabinClass | null;
+};
+
+export type TicketProviderResult = {
+  provider_id: string;
+  provider_name: string;
+  mode: TicketMode;
+  deeplink_url: string;
+  source_home_url: string;
+  live_price_supported: boolean;
+  fare_display?: string | null;
+  currency?: string | null;
+  search_hint: string;
+  redirect_label: string;
+  notes: string[];
+};
+
+export type TicketSearchResponse = {
+  mode: TicketMode;
+  origin: string;
+  destination: string;
+  departure_date: string;
+  return_date?: string | null;
+  live_prices_available: boolean;
+  providers: TicketProviderResult[];
+  message: string;
+};
+
+export type PlannerMode = "SAFE" | "GENERAL";
+
+export type PlannerMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type PlannerChatRequest = {
+  mode: PlannerMode;
+  destination_context?: string | null;
+  messages: PlannerMessage[];
+};
+
+export type PlannerChatResponse = {
+  mode: PlannerMode;
+  reply: string;
+  model: string;
+  created_at: string;
+  fallback_used: boolean;
+  diagnostic?: string | null;
+};

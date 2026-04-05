@@ -16,6 +16,8 @@ Safety-first travel assistance MVP with a FastAPI backend and a React Native mob
 - Live location updates stored in Redis
 - SOS event creation with real-time WebSocket fanout
 - Guardian reviews and rating aggregation
+- Ticket search comparison for air, train, and bus with provider redirects
+- Trip-planning chat with safe and general modes
 
 ## Quick start
 
@@ -38,6 +40,13 @@ uvicorn app.main:app --reload
 
 API docs will be available at `http://localhost:8000/docs`.
 
+To enable the planner chat, add these backend env vars:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-5-mini
+```
+
 ### Mobile
 
 ```bash
@@ -55,3 +64,5 @@ For a physical device, point the mobile API base URL at your machine's LAN IP in
 - Guardian discovery currently uses Redis live locations plus an in-memory distance calculation; PostGIS can replace this later without changing the client contracts.
 - The mobile map uses OpenStreetMap raster tiles, so no Google Maps API key is required for the MVP.
 - Phone numbers are masked in guardian discovery responses to avoid direct contact sharing.
+- Ticket comparison currently opens official provider search pages for MakeMyTrip, Goibibo, and Yatra. Live provider fares can be added later through official APIs or MCP connectors.
+- Trip planner chat uses the OpenAI Responses API through the backend so the API key stays server-side. Safe mode prioritizes practical safety guidance, while General mode focuses on itinerary and planning.

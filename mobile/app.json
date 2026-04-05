@@ -13,7 +13,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.saferoute.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "SafeRoute uses your location to discover guardians and send SOS alerts."
+        "NSLocationWhenInUseUsageDescription": "SafeRoute uses your location to discover guardians and send SOS alerts.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,6 +26,11 @@
     },
     "web": {
       "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c8a11fae-9d1f-4af2-a0a6-2b20ec58a0e1"
+      }
     }
   }
 }

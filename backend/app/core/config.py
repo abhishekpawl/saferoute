@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     default_otp_code: str | None = Field(default="123456", alias="DEFAULT_OTP_CODE")
     otp_expiry_seconds: int = Field(default=300, alias="OTP_EXPIRY_SECONDS")
     guardian_discovery_radius_km: float = Field(default=10.0, alias="GUARDIAN_DISCOVERY_RADIUS_KM")
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-5-mini", alias="OPENAI_MODEL")
 
     @property
     def cors_origins(self) -> list[str]:

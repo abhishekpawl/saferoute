@@ -13,6 +13,19 @@ export const api = axios.create({
   timeout: 15000,
 });
 
+let unauthorizedHandler: (() => void | Promise<void>) | null = null;
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error?.response?.status === 401 && unauthorizedHandler) {
+      await unauthorizedHandler();
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export function setAccessToken(token?: string | null) {
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -26,3 +39,6 @@ export function getRealtimeUrl(token: string) {
   return `${wsBase}/api/v1/ws/realtime?token=${token}`;
 }
 
+export function setUnauthorizedHandler(handler: (() => void | Promise<void>) | null) {
+  unauthorizedHandler = handler;
+}

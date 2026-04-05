@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import certifi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
@@ -12,7 +13,11 @@ from app.db.session import create_database
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    redis_kwargs = {"decode_responses": True}
+    if settings.redis_url.startswith("rediss://"):
+        redis_kwargs["ssl_ca_certs"] = certifi.where()
+
+    redis = Redis.from_url(settings.redis_url, **redis_kwargs)
     app.state.redis = redis
     await create_database()
     yield
@@ -41,4 +46,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
